@@ -16,17 +16,17 @@
 ### 使用
 
 ```python
-    >input url(e.g,'get:www.example.com?id=,post:www.example.com'):http://cfe08f29-9167-488c-b6db-3354144ab882.node4.buuoj.cn:81/?stunum=
-    >input require method(Get/Post):get
-    >input right string:Hi admin
-    >input right id(the number while be used when the result is right):1
-    >input error id:2
-    >select function(if/elt):if
-	<result:{'flag': ['flag', 'value'], 'score': ['id', 'name', 'score']}
-	>input table which you want to dump:flag
-    >columns:['flag', 'value']
-	>input columns(split by ','):flag,value
-    <result:['flagflag{xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}']
+>input url(e.g,'get:www.example.com?id=,post:www.example.com'):http://cfe08f29-9167-488c-b6db-3354144ab882.node4.buuoj.cn:81/?stunum=
+>input require method(Get/Post):get
+>input right string:Hi admin
+>input right id(the number while be used when the result is right):1
+>input error id:2
+>select function(if/elt):if
+<result:{'flag': ['flag', 'value'], 'score': ['id', 'name', 'score']}
+>input table which you want to dump:flag
+>columns:['flag', 'value']
+>input columns(split by ','):flag,value
+<result:['flagflag{xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}']
 ```
 
 

